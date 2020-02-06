@@ -1,0 +1,6 @@
+#!/bin/bash
+
+./node_modules/.bin/gulp clean
+./node_modules/.bin/gulp --production
+cd dist
+./../node_modules/.bin/nexe main.js --resource templates/**/* -o dev-compose
