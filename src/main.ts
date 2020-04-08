@@ -30,11 +30,11 @@ const errorHandler = (response) => {
 
 //Define commands
 cli.name('dev-compose')
-    .bin('dev-compose')
+    .bin('dev')
     .version(VERSION)
-    .description('Manage a dev environment configured by a YAML devSpec')
-    .help('If no command is specified, this will start an interactive shell for running dev subcommands.')
-    .argument('[cmd]', 'Try "help" for a list of subcommands applicable to the environment', cli.STRING, '')
+    .description('Manage a development environment configured by a YAML devSpec')
+    .help('If no command is specified, this will start an interactive shell for running dev commands.')
+    .argument('[cmd]', 'Try "help" for a list of commands applicable to the environment', cli.STRING, '')
     .argument('[args...]', '')
     .option('-f, --file <file>', 'File containing a YAML devSpec', cli.STRING, DEFAULT_YAML_FILE)
     .action((args, options) => {
