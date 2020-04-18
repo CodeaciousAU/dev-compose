@@ -56,8 +56,8 @@ export default class DevController {
             switch (command)  {
                 case 'help':
                 case 'commands':
-                    let commands = ['commands', 'status', 'start', 'stop', 'init', 'destroy', 'sync',
-                        'exec', 'logs'];
+                    let commands = ['commands', 'status', 'start', 'stop', 'restart', 'init',
+                        'destroy', 'sync', 'exec', 'logs'];
                     for (let customCommand in this.devSpec.handlers) {
                         if (commands.indexOf(customCommand) < 0) {
                             commands.push(customCommand);
@@ -70,9 +70,20 @@ export default class DevController {
                 case 'status':
                     return this.dockerCompose(['ps']);
                 case 'start':
+                    if (args.length === 1) {
+                        return this.dockerCompose(['start', args[0]]);
+                    }
                     return this.dockerCompose(['up', '-d']);
                 case 'stop':
+                    if (args.length === 1) {
+                        return this.dockerCompose(['stop', args[0]]);
+                    }
                     return this.dockerCompose(['stop']);
+                case 'restart':
+                    if (args.length === 1) {
+                        return this.dockerCompose(['restart', args[0]]);
+                    }
+                    return this.dockerCompose(['restart']);
                 case 'init':
                     return this.execute('destroy').then(() => {
                         return this.dockerCompose(['pull']);
