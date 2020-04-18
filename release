@@ -1,6 +1,8 @@
 #!/bin/bash
 
+# Usage: release [-t <linux|macos|windows>]
+
 ./node_modules/.bin/gulp clean
 ./node_modules/.bin/gulp --production
 cd dist
-./../node_modules/.bin/nexe main.js --resource templates/**/* -o dev
+./../node_modules/.bin/nexe main.js --resource templates/**/* -o dev $@
