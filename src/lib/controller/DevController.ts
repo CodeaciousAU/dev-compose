@@ -55,7 +55,8 @@ export default class DevController {
             let container = this.devSpec.defaultServiceName;
             switch (command)  {
                 case 'help':
-                    let commands = ['help', 'status', 'start', 'stop', 'init', 'destroy', 'sync',
+                case 'commands':
+                    let commands = ['commands', 'status', 'start', 'stop', 'init', 'destroy', 'sync',
                         'exec', 'logs'];
                     for (let customCommand in this.devSpec.handlers) {
                         if (commands.indexOf(customCommand) < 0) {

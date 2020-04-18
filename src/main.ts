@@ -34,7 +34,7 @@ cli.name('dev-compose')
     .version(VERSION)
     .description('Manage a development environment configured by a YAML devSpec')
     .help('If no command is specified, this will start an interactive shell for running dev commands.')
-    .argument('[cmd]', 'Try "help" for a list of commands applicable to the environment', cli.STRING, '')
+    .argument('[cmd]', 'Try "commands" for a list of commands applicable to the environment', cli.STRING, '')
     .argument('[args...]', '')
     .option('-f, --file <file>', 'File containing a YAML devSpec', cli.STRING, DEFAULT_YAML_FILE)
     .action((args, options) => {
