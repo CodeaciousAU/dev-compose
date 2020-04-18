@@ -10,6 +10,7 @@ export interface DevSpecCommandDefaults {
 export interface DevSpecAction extends DevSpecCommandDefaults {
     command: string;
     handler: string;
+    action: 'restart';
     args: string[];
 }
 
@@ -102,16 +103,28 @@ export default class DevSpec extends Model {
                         },
                         command: {type: 'string'},
                         handler: {type: 'string'},
+                        action: {
+                            type: 'string',
+                            validate: (input: string, context: string) => {
+                                if (input !== 'restart') {
+                                    throw new ValidationError('Unsupported action: Expecting "restart"', context);
+                                }
+                            }
+                        },
                         args: {
                             type: 'array',
                             members: {type: 'string'},
                         }
                     },
                     validate: (input: DevSpecAction, context: string) => {
-                        if (input.command === null && input.handler === null) {
-                            throw new ValidationError('Either "command" or "handler" must be specified', context);
-                        } else if (input.command !== null && input.handler !== null) {
-                            throw new ValidationError('Cannot specify both "command" and "handler" for a single action', context);
+                        if (input.action === null && input.command === null && input.handler === null) {
+                            throw new ValidationError('One of "action", "command" or "handler" must be specified', context);
+                        } else if ((input.action !== null) as any
+                            + (input.command !== null) as any
+                            + (input.handler !== null) as any
+                            > 1)
+                        {
+                            throw new ValidationError('Cannot specify more than one of "action", "command" and "handler" for a single action', context);
                         }
                     },
                 },

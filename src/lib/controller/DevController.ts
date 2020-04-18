@@ -285,6 +285,8 @@ export default class DevController {
                 );
                 if (action.command !== null) {
                     return this.runCommandAction(action, args).then(next);
+                } else if (action.action !== null) {
+                    return this.runSpecialAction(action).then(next);
                 } else {
                     return this.runCustomActions(action.handler, action.args || args).then(next);
                 }
@@ -293,6 +295,19 @@ export default class DevController {
             }
         };
         return next();
+    }
+
+    /**
+     * Run the given DevSpec special action.
+     */
+    private runSpecialAction(action: DevSpecAction): Promise<void> {
+        let container = action.service || this.devSpec.defaultServiceName;
+        switch (action.action) {
+            case 'restart':
+                return this.dockerCompose(['restart', container]);
+            default:
+                return Promise.reject('Unsupported action "'+action.action+'"');
+        }
     }
 
     /**
