@@ -18,7 +18,7 @@
     "gulp-sourcemaps": "^2.6.5",
     "gulp-typescript": "^5.0.1",
     "gulp-util": "^3.0.8",
-    "nexe": "^3.3.2",
+    "nexe": "^3.3.7",
     "typescript": "^3.7.5"
   },
   "scripts": {},

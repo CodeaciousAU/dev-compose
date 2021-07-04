@@ -177,7 +177,7 @@ export default class DevController {
         if ('services' in model) {
             for (let serviceName in model['services']) {
                 let service = model['services'][serviceName];
-                if (typeof service !== 'object') {
+                if (typeof service !== 'object' || !envFiles.length) {
                     continue;
                 }
                 if (!('env_file' in service)) {

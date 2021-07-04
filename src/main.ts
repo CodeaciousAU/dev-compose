@@ -5,7 +5,7 @@ import * as path from 'path';
 
 import DevController from "./lib/controller/DevController";
 
-const VERSION = '1.0.0b2';
+const VERSION = '1.0.0b3';
 const DEFAULT_YAML_FILE = 'dev.yml';
 
 
