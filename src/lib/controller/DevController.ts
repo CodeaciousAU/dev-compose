@@ -194,12 +194,13 @@ export default class DevController {
     }
 
     /**
-     * Execute the docker-compose tool with the given arguments.
+     * Execute the 'docker compose' tool with the given arguments.
      */
     private dockerCompose(args: string[]): Promise<void> {
         args = args.slice(0);
         args.unshift('-f', this.composeFile);
         args.unshift('--project-directory', process.cwd());
+        args.unshift('compose');
         let environment = Object.assign({}, process.env);
         if (this.devSpec.buildkit) {
             environment['COMPOSE_DOCKER_CLI_BUILD'] = '1';
@@ -207,12 +208,12 @@ export default class DevController {
         }
 
         return new Promise((resolve, reject) => {
-            let child = child_process.spawn('docker-compose', args, {
+            let child = child_process.spawn('docker', args, {
                 env: environment,
                 stdio: 'inherit',
             });
             child.on('error', err => {
-                reject('Unable to run docker-compose. Make sure it\'s installed and available in the system path.');
+                reject('Unable to run the `docker` command-line tool. Make sure it\'s installed and available in the system path.');
             });
             child.on('close', status => {
                 if (status == 0) {
@@ -225,7 +226,7 @@ export default class DevController {
     }
 
     /**
-     * Execute a command inside a container, using 'docker-compose exec'.
+     * Execute a command inside a container, using 'docker compose exec'.
      *
      * @param container Compose service name
      * @param command The program to execute in the container
