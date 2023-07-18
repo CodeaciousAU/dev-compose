@@ -1,10 +1,10 @@
 import * as child_process from 'child_process';
-import * as Color from 'colors/safe';
 import * as fs from "fs";
 import * as os from "os";
 import * as path from 'path';
 import * as repl from 'repl';
 import * as yaml from 'js-yaml';
+import Color from 'colors/safe';
 
 import DevSpec, {DevSpecAction} from "../model/DevSpec";
 
@@ -56,82 +56,130 @@ export default class DevController {
             switch (command)  {
                 case 'help':
                 case 'commands':
-                    let commands = ['commands', 'status', 'start', 'stop', 'restart', 'init',
-                        'destroy', 'sync', 'exec', 'logs'];
-                    for (let customCommand in this.devSpec.handlers) {
-                        if (commands.indexOf(customCommand) < 0) {
-                            commands.push(customCommand);
-                        }
-                    }
-                    console.log(Color.blue('Supported commands:'));
-                    console.log(Color.green('  '+commands.join(' ')));
-                    console.log();
-                    return Promise.resolve();
+                    return this.commands();
                 case 'status':
-                    return this.dockerCompose(['ps']);
+                    return this.status();
                 case 'start':
                     if (args.length === 1) {
-                        return this.dockerCompose(['start', args[0]]);
+                        return this.start(args[0]);
                     }
-                    return this.dockerCompose(['up', '-d']);
+                    return this.start();
                 case 'stop':
                     if (args.length === 1) {
-                        return this.dockerCompose(['stop', args[0]]);
+                        return this.stop(args[0]);
                     }
-                    return this.dockerCompose(['stop']);
+                    return this.stop();
                 case 'restart':
                     if (args.length === 1) {
-                        return this.dockerCompose(['restart', args[0]]);
+                        return this.restart(args[0]);
                     }
-                    return this.dockerCompose(['restart']);
+                    return this.restart();
                 case 'init':
-                    return this.execute('destroy').then(() => {
-                        return this.dockerCompose(['pull']);
-                    }).then(() => {
-                        return this.dockerCompose(['up', '-d', '--build']);
-                    }).then(() => {
-                        return this.runCustomActions('init');
-                    });
+                    return this.init();
                 case 'destroy':
-                    return this.runCustomActions('destroy').then(() => {
-                        return this.dockerCompose(['down', '--volumes', '--rmi', 'local']);
-                    });
+                    return this.destroy();
                 case 'sync':
-                    return this.dockerCompose(['pull']).then(() => {
-                        return this.dockerCompose(['up', '-d', '--build']);
-                    }).then(() => {
-                        return this.runCustomActions('sync');
-                    });
+                    return this.sync();
                 case 'exec':
                     if (args.length >= 2 && args[0] == '-c') {
                         container = args[1];
                         args = args.slice(2);
                     }
-                    if (!(typeof container === 'string') || !container.length) {
-                        return Promise.reject('Unable to determine which container to use. Please specify a service name using -c');
-                    }
                     if (!args.length) {
                         return Promise.reject('Syntax: exec [-c service_name] <program> [args...]');
                     }
-                    return this.dockerComposeExec(container, args[0], args.slice(1));
+                    return this.exec(args[0], args.slice(1), container);
                 case 'logs':
                     if (args.length >= 2 && args[0] == '-c') {
                         container = args[1];
                         args = args.slice(2);
                     }
-                    if (!(typeof container === 'string') || !container.length) {
-                        return Promise.reject('Unable to determine which container to use. Please specify a service name using -c');
-                    }
-                    return this.dockerCompose(['logs', '-f', container]);
+                    return this.logs(container);
                 default:
-                    if (this.devSpec.hasActionsForHandlerName(command)) {
-                        return this.runCustomActions(command, args);
-                    }
-                    return Promise.reject('No handler exists for command "'+command+'"');
+                    return this.customAction(command, args);
             }
         } catch (err) {
             return Promise.reject(err);
         }
+    }
+
+    public async commands() {
+        let commands = ['commands', 'status', 'start', 'stop', 'restart', 'init',
+            'destroy', 'sync', 'exec', 'logs'];
+        for (let customCommand in this.devSpec.handlers) {
+            if (commands.indexOf(customCommand) < 0) {
+                commands.push(customCommand);
+            }
+        }
+        console.log(Color.blue('Supported commands:'));
+        console.log(Color.green('  '+commands.join(' ')));
+        console.log();
+    }
+
+    public async status() {
+        return this.dockerCompose(['ps']);
+    }
+
+    public async start(service?: string) {
+        if (service !== undefined) {
+            return this.dockerCompose(['start', service]);
+        }
+        return this.dockerCompose(['up', '-d']);
+    }
+
+    public async stop(service?: string) {
+        if (service !== undefined) {
+            return this.dockerCompose(['stop', service]);
+        }
+        return this.dockerCompose(['stop']);
+    }
+
+    public async restart(service?: string) {
+        if (service !== undefined) {
+            return this.dockerCompose(['restart', service]);
+        }
+        return this.dockerCompose(['restart']);
+    }
+
+    public async init() {
+        await this.execute('destroy');
+        await this.dockerCompose(['pull']);
+        await this.dockerCompose(['up', '-d', '--build']);
+        await this.runCustomActions('init');
+    }
+
+    public async destroy() {
+        await this.runCustomActions('destroy')
+        await this.dockerCompose(['down', '--volumes', '--rmi', 'local']);
+    }
+
+    public async sync() {
+        await this.dockerCompose(['pull']);
+        await this.dockerCompose(['up', '-d', '--build']);
+        await this.runCustomActions('sync');
+    }
+
+    public async exec(command: string, args: string[]=[], service?: string) {
+        service = service ?? this.devSpec.defaultServiceName;
+        if (!(typeof service === 'string') || !service.length) {
+            throw 'Unable to determine which container to use. Please specify a service name using -c';
+        }
+        await this.dockerComposeExec(service, command, args);
+    }
+
+    public async logs(service?: string) {
+        service = service ?? this.devSpec.defaultServiceName;
+        if (!(typeof service === 'string') || !service.length) {
+            throw 'Unable to determine which container to use. Please specify a service name using -c';
+        }
+        await this.dockerCompose(['logs', '-f', service]);
+    }
+
+    public async customAction(handlerName: string, args: string[]=[]) {
+        if (!this.devSpec.hasActionsForHandlerName(handlerName)) {
+            throw 'No handler exists for command "'+handlerName+'"';
+        }
+        await this.runCustomActions(handlerName, args);
     }
 
     /**
@@ -175,7 +223,7 @@ export default class DevController {
             envFiles.push(pathPrefix+'local.env');
         }
         if ('services' in model) {
-            for (let serviceName in model['services']) {
+            for (let serviceName in (model['services'] as any)) {
                 let service = model['services'][serviceName];
                 if (typeof service !== 'object' || !envFiles.length) {
                     continue;
