@@ -77,6 +77,10 @@ const options = yargs(hideBin(process.argv))
                 desc: 'Optionally specify the service name of the container to use, to override the default',
                 type: 'string',
                 requiresArg: true,
+            }).option('u', {
+                desc: 'Optionally specify the name or UID of the user to run as, to override the default',
+                type: 'string',
+                requiresArg: true,
             }).example('$0 exec -c app -- bash -c set', 'In order to avoid command arguments being interpreted as dev arguments, you can optionally use a -- separator, as shown, before the command line to execute.')
     )
     .command('logs', 'Print the recent log output from a container that is part of the devSpec. Then, watch and continue to print any new log messages that arrive.',
@@ -144,7 +148,10 @@ async function run() {
             if (Array.isArray(options['c'])) {
                 throw 'You can only specify the -c option once.';
             }
-            return controller.exec(options['program'] as string, args, options['c'] as string);
+            if (Array.isArray(options['u'])) {
+                throw 'You can only specify the -u option once.';
+            }
+            return controller.exec(options['program'] as string, args, options['c'] as string, options['u'] as string);
         case 'logs':
             if (Array.isArray(options['c'])) {
                 throw 'You can only specify the -c option once.';

@@ -53,6 +53,7 @@ export default class DevController {
     public execute(command: string, args: string[] = []): Promise<void> {
         try {
             let container = this.devSpec.defaultServiceName;
+            let runAsUser = this.devSpec.command_defaults.user;
             switch (command)  {
                 case 'help':
                 case 'commands':
@@ -81,14 +82,20 @@ export default class DevController {
                 case 'sync':
                     return this.sync();
                 case 'exec':
-                    if (args.length >= 2 && args[0] == '-c') {
-                        container = args[1];
-                        args = args.slice(2);
+                    for (let i = 0; i < 2; i++) {
+                        if (args.length >= 2 && args[0] == '-c') {
+                            container = args[1];
+                            args = args.slice(2);
+                        }
+                        if (args.length >= 2 && args[0] == '-u') {
+                            runAsUser = args[1];
+                            args = args.slice(2);
+                        }
                     }
                     if (!args.length) {
-                        return Promise.reject('Syntax: exec [-c service_name] <program> [args...]');
+                        return Promise.reject('Syntax: exec [-c service_name] [-u user] <program> [args...]');
                     }
-                    return this.exec(args[0], args.slice(1), container);
+                    return this.exec(args[0], args.slice(1), container, runAsUser);
                 case 'logs':
                     if (args.length >= 2 && args[0] == '-c') {
                         container = args[1];
@@ -159,12 +166,12 @@ export default class DevController {
         await this.runCustomActions('sync');
     }
 
-    public async exec(command: string, args: string[]=[], service?: string) {
+    public async exec(command: string, args: string[]=[], service?: string, runAsUser?: string) {
         service = service ?? this.devSpec.defaultServiceName;
         if (!(typeof service === 'string') || !service.length) {
             throw 'Unable to determine which container to use. Please specify a service name using -c';
         }
-        await this.dockerComposeExec(service, command, args);
+        await this.dockerComposeExec(service, command, args, runAsUser);
     }
 
     public async logs(service?: string) {
