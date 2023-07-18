@@ -1,8 +1,0 @@
-#!/bin/bash
-
-# Usage: release [-t <win-x64|linux-x64|macos-x64|macos-arm64>]
-
-./node_modules/.bin/gulp clean
-./node_modules/.bin/gulp --production
-cd dist
-./../node_modules/.bin/pkg main.js -o dev $@
